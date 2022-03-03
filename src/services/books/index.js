@@ -15,7 +15,7 @@ import uniqid from "uniqid"
 import createHttpError from "http-errors"
 import { validationResult } from "express-validator"
 import { newBookValidation } from "./validation.js"
-import { getBooks, getUsers, writeBooks } from "../../lib/fs-tools.js"
+import { getBooks, writeBooks } from "../../lib/fs-tools.js"
 
 const booksRouter = express.Router()
 

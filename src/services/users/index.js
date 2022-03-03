@@ -15,6 +15,7 @@ import fs from "fs" // CORE MODULE (no need to be installed)
 import { fileURLToPath } from "url" // CORE MODULE
 import { dirname, join } from "path" // CORE MODULE
 import uniqid from "uniqid" // 3RD PARTY MODULE
+import { getUsers } from "../../lib/fs-tools.js"
 
 //  HOW TO GET users.json PATH ON DISK --> C:\Strive\FullStack\2021\Nov21\M5\strive-m5-d2-nov21\src\services\users\users.json
 
@@ -72,11 +73,11 @@ usersRouter.get("/", (request, response) => {
 })
 
 // 3.
-usersRouter.get("/:userId", (request, response) => {
+usersRouter.get("/:userId", async (request, response) => {
   console.log("REQ PARAMS: ", request.params.userId)
 
   // 1. Read the file --> obtaining an array
-  const usersArray = JSON.parse(fs.readFileSync(usersJSONPath))
+  const usersArray = await getUsers()
 
   // 2. Find the specific user by id in the array
   const foundUser = usersArray.find(user => user.id === request.params.userId)
@@ -120,5 +121,10 @@ usersRouter.delete("/:userId", (request, response) => {
 
   response.status(204).send()
 })
+
+// usersRouter.patch("/:userId/avatar", multer().single("avatar"), (req,res) => {
+//   // 1. save file in public folder
+//   // 2. update specified user's record in db by adding a filed called avatar: "url"
+// })
 
 export default usersRouter

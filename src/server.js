@@ -2,13 +2,18 @@
 import express from "express" // <-- NEW IMPORT SYNTAX (remember to add type: "module" to package.json to use it!)
 import listEndpoints from "express-list-endpoints"
 import cors from "cors"
+import { join } from "path"
+
 import usersRouter from "./services/users/index.js"
 import booksRouter from "./services/books/index.js"
+import filesRouter from "./services/files/index.js"
 import { badRequestHandler, unauthorizedHandler, notFoundHandler, genericErrorHandler } from "./errorHandlers.js"
 
 const server = express()
 
 const port = 3001
+
+const publicFolderPath = join(process.cwd(), "./public")
 
 // *********************************** MIDDLEWARES ***********************************
 
@@ -24,6 +29,7 @@ const fakeAuthMiddleware = (req, res, next) => {
   else next()
 }
 
+server.use(express.static(publicFolderPath))
 server.use(loggerMiddleware) // Global middleware
 server.use(cors())
 // server.use(fakeAuthMiddleware) // Global middleware
@@ -33,6 +39,7 @@ server.use(express.json()) // If you don't add this configuration to our server 
 
 server.use("/users", usersRouter)
 server.use("/books", fakeAuthMiddleware, booksRouter)
+server.use("/files", filesRouter)
 
 // ********************************** ERROR HANDLERS *********************************
 
