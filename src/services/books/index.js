@@ -11,13 +11,11 @@
 */
 
 import express from "express"
-import fs from "fs"
-import { join, dirname } from "path"
-import { fileURLToPath } from "url"
 import uniqid from "uniqid"
 import createHttpError from "http-errors"
 import { validationResult } from "express-validator"
 import { newBookValidation } from "./validation.js"
+import { getBooks, getUsers, writeBooks } from "../../lib/fs-tools.js"
 
 const booksRouter = express.Router()
 
@@ -26,22 +24,17 @@ const anotherStupidLoggerMiddleware = (req, res, next) => {
   next()
 }
 
-const booksJsonPath = join(dirname(fileURLToPath(import.meta.url)), "books.json")
-
-const getBooks = () => JSON.parse(fs.readFileSync(booksJsonPath))
-const writeBooks = content => fs.writeFileSync(booksJsonPath, JSON.stringify(content))
-
-booksRouter.post("/", newBookValidation, (req, res, next) => {
+booksRouter.post("/", newBookValidation, async (req, res, next) => {
   try {
     const errorsList = validationResult(req)
     if (errorsList.isEmpty()) {
       const newBook = { ...req.body, createdAt: new Date(), id: uniqid() }
 
-      const booksArray = getBooks()
+      const booksArray = await getBooks()
 
       booksArray.push(newBook)
 
-      writeBooks(booksArray)
+      await writeBooks(booksArray)
 
       res.status(201).send({ id: newBook.id })
     } else {
@@ -52,10 +45,11 @@ booksRouter.post("/", newBookValidation, (req, res, next) => {
   }
 })
 
-booksRouter.get("/", anotherStupidLoggerMiddleware, (req, res, next) => {
+booksRouter.get("/", anotherStupidLoggerMiddleware, async (req, res, next) => {
   try {
     // throw new Error("Kaboooooooooooooooooooooooooom!")
-    const books = getBooks()
+    const books = await getBooks()
+    // const users = await getUsers()
 
     if (req.query && req.query.category) {
       const filteredBooks = books.filter(book => book.category === req.query.category)
@@ -68,11 +62,11 @@ booksRouter.get("/", anotherStupidLoggerMiddleware, (req, res, next) => {
   }
 })
 
-booksRouter.get("/:bookId", (req, res, next) => {
+booksRouter.get("/:bookId", async (req, res, next) => {
   try {
     const bookId = req.params.bookId
 
-    const books = getBooks()
+    const books = await getBooks()
 
     const foundBook = books.find(book => book.id === bookId)
     if (foundBook) {
@@ -85,11 +79,11 @@ booksRouter.get("/:bookId", (req, res, next) => {
   }
 })
 
-booksRouter.put("/:bookId", (req, res, next) => {
+booksRouter.put("/:bookId", async (req, res, next) => {
   try {
     const bookId = req.params.bookId
 
-    const books = getBooks()
+    const books = await getBooks()
 
     const index = books.findIndex(book => book.id === bookId)
 
@@ -100,7 +94,7 @@ booksRouter.put("/:bookId", (req, res, next) => {
 
       books[index] = updatedBook
 
-      writeBooks(books)
+      await writeBooks(books)
 
       res.send(updatedBook)
     } else {
@@ -111,15 +105,15 @@ booksRouter.put("/:bookId", (req, res, next) => {
   }
 })
 
-booksRouter.delete("/:bookId", (req, res, next) => {
+booksRouter.delete("/:bookId", async (req, res, next) => {
   try {
     const bookId = req.params.bookId
 
-    const books = getBooks()
+    const books = await getBooks()
 
     const remainingBooks = books.filter(book => book.id !== bookId)
 
-    writeBooks(remainingBooks)
+    await writeBooks(remainingBooks)
 
     res.status(204).send()
   } catch (error) {
